@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cadastrar Senha de Saque</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#ffffff; --elev:#f7f7f8; --txt:#111827; --sub:#6b7280;
+    --border:#d1d5db; --ok:#16a34a; --err:#dc2626; --warn:#f59e0b;
+    --btn:#111827; --btn-txt:#ffffff; --accent:#3b82f6;
+  }
+  html[data-tema="escuro"]{
+    --bg:#000000; --elev:#111111; --txt:#f5f5f5; --sub:#9ca3af;
+    --border:#262626; --ok:#22c55e; --err:#ef4444; --warn:#f59e0b;
+    --btn:#f5f5f5; --btn-txt:#000000; --accent:#3b82f6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--txt);
+    min-height:100vh; display:flex; justify-content:center;
+    padding:16px; padding-bottom:env(safe-area-inset-bottom,16px);
+    transition:background .25s, color .25s;
+  }
+  .app{width:100%; max-width:400px;}
+  header{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  header h1{font-size:18px; font-weight:700;}
+  header .sub{font-size:12px; color:var(--sub); margin-top:2px;}
+  .icone-tema{
+    width:38px; height:38px; border-radius:50%;
+    background:var(--elev); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:transform .2s;
+  }
+  .icone-tema:active{transform:scale(.92);}
+  .icone-tema svg{width:18px; height:18px; stroke:var(--txt); fill:none; stroke-width:2;}
+  .card{
+    background:var(--elev); border:1px solid var(--border);
+    border-radius:14px; padding:16px; margin-bottom:14px;
+  }
+  .card h2{font-size:14px; margin-bottom:10px; font-weight:600;}
+  .card p{font-size:13px; color:var(--sub); line-height:1.5;}
+  .aviso-spam{
+    font-size:12px; color:var(--sub); margin-top:10px; line-height:1.5;
+    padding:10px; border-left:3px solid var(--warn); background:rgba(245,158,11,.08);
+    border-radius:6px; display:none;
+  }
+  .aviso-spam.ativo{display:block; animation:fadeSlide .3s ease;}
+  .aviso-spam .asterisco{color:var(--warn); font-weight:700;}
+  @keyframes fadeSlide{from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);}}
+
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px; color:var(--sub); margin-bottom:6px; display:block;}
+  .input-wrapper{
+    display:flex; align-items:center; gap:8px;
+    background:var(--bg); border:1px solid var(--border);
+    border-radius:10px; padding:0 12px; height:48px;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .input-wrapper:focus-within{
+    border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.15);
+  }
+  .input-wrapper input{
+    flex:1; border:0; background:transparent; color:var(--txt);
+    font-size:16px; outline:0; min-width:0;
+  }
+  .input-wrapper input::placeholder{color:var(--sub);}
+  .olho{
+    width:32px; height:32px; border:0; background:transparent;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    border-radius:8px; transition:background .2s;
+  }
+  .olho:active{background:rgba(128,128,128,.15);}
+  .olho svg{width:18px; height:18px; stroke:var(--sub); fill:none; stroke-width:2;}
+  .olho.ativo svg{stroke:var(--accent);}
+
+  .code-inputs{display:flex; gap:8px; justify-content:center; margin:14px 0;}
+  .code-inputs input{
+    width:44px; height:52px; text-align:center; font-size:22px; font-weight:700;
+    border:2px solid var(--border); border-radius:10px;
+    background:var(--bg); color:var(--txt); outline:0;
+    -webkit-text-fill-color:var(--txt);
+    transition:border-color .2s, transform .15s;
+  }
+  .code-inputs input:focus{border-color:var(--accent); transform:scale(1.04);}
+  .code-inputs input.sucesso{border-color:var(--ok); animation:pulseOk .4s ease;}
+  @keyframes pulseOk{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5);} 100%{box-shadow:0 0 0 12px rgba(34,197,94,0);}}
+  .shake{animation:shakeTudo .35s;}
+  @keyframes shakeTudo{
+    0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);}
+    50%{transform:translateX(6px);} 75%{transform:translateX(-4px);}
+  }
+
+  .btn{
+    width:100%; height:48px; border:0; border-radius:10px;
+    background:var(--btn); color:var(--btn-txt);
+    font-size:15px; font-weight:600; cursor:pointer;
+    transition:transform .15s, opacity .2s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn.secundario{
+    background:transparent; color:var(--txt); border:1px solid var(--border);
+  }
+  .btn svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2;}
+
+  .link{
+    display:block; text-align:center; font-size:13px; color:var(--accent);
+    margin-top:12px; background:none; border:0; cursor:pointer;
+    width:100%; padding:8px;
+  }
+  .link:active{opacity:.6;}
+
+  .termos-box{
+    display:flex; align-items:flex-start; gap:10px; margin:8px 0 14px;
+    font-size:12px; color:var(--sub); line-height:1.5;
+  }
+  .termos-box input{display:none;}
+  .check-custom{
+    width:20px; height:20px; border:2px solid var(--border); border-radius:6px;
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:background .2s, border-color .2s; cursor:pointer; margin-top:1px;
+  }
+  .check-custom svg{width:12px; height:12px; stroke:#fff; fill:none; stroke-width:3; opacity:0; transition:opacity .15s;}
+  .termos-box input:checked + .check-custom{background:var(--ok); border-color:var(--ok);}
+  .termos-box input:checked + .check-custom svg{opacity:1;}
+  .termos-box.shake-txt{animation:shakeTudo2 .35s;}
+  @keyframes shakeTudo2{0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 50%{transform:translateX(5px);} 75%{transform:translateX(-3px);}}
+  .termos-box a{color:var(--accent); text-decoration:none;}
+
+  .status-codigo{
+    font-size:12px; text-align:center; color:var(--sub);
+    margin-top:8px; min-height:16px;
+  }
+  .status-codigo:empty{display:none;}
+  .status-codigo.err{color:var(--err);}
+
+  .tela{display:none; animation:fadeIn .25s ease;}
+  .tela.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .sucesso{text-align:center; padding:20px 0;}
+  .sucesso .circulo{
+    width:70px; height:70px; border-radius:50%; background:rgba(34,197,94,.12);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 16px;
+    animation:popIn .4s ease;
+  }
+  .sucesso .circulo svg{width:34px; height:34px; stroke:var(--ok); fill:none; stroke-width:3;}
+  @keyframes popIn{0%{transform:scale(.5); opacity:0;} 100%{transform:scale(1); opacity:1;}}
+  .sucesso h2{font-size:18px; margin-bottom:6px;}
+  .sucesso p{font-size:13px; color:var(--sub);}
+
+  .modal-tela{
+    position:fixed; inset:0; background:var(--bg); z-index:99;
+    padding:16px; display:none; overflow-y:auto;
+  }
+  .modal-tela.active{display:block; animation:fadeIn .2s;}
+  .modal-tela h2{font-size:16px; margin-bottom:12px;}
+  .modal-tela p{font-size:13px; color:var(--sub); line-height:1.6; margin-bottom:10px;}
+
+  ::-webkit-scrollbar{width:6px; height:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <h1>🔐 Senha de Saque</h1>
+      <div class="sub">Cadastre sua senha de 6 dígitos</div>
+    </div>
+    <div class="icone-tema" id="btnTema" onclick="alternarTema()" aria-label="Alternar tema">
+      <svg id="iconTema" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </div>
+  </header>
+
+  <!-- TELA 1: Formulário -->
+  <div class="tela active" id="telaForm">
+    <div class="card">
+      <h2>Nova senha</h2>
+      <p>Escolha uma senha numérica de 6 dígitos. Ela será usada para confirmar seus saques.</p>
+    </div>
+
+    <div class="field">
+      <label>Senha (6 dígitos)</label>
+      <div class="input-wrapper">
+        <input id="senha1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••">
+        <button type="button" class="olho" onclick="toggleSenha('senha1', this)" aria-label="Mostrar senha"></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Confirmar senha</label>
+      <div class="input-wrapper">
+        <input id="senha2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••">
+        <button type="button" class="olho" onclick="toggleSenha('senha2', this)" aria-label="Mostrar senha"></button>
+      </div>
+    </div>
+
+    <label class="termos-box" id="termosBox">
+      <input type="checkbox" id="aceiteTermos">
+      <span class="check-custom"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <span>Li e aceito os <a href="javascript:void(0)" onclick="abrirTermos(event)">termos de uso</a> e confirmo que sou responsável pela minha senha.</span>
+    </label>
+
+    <button class="btn" id="btnSalvar" onclick="salvarSenha()">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar senha
+    </button>
+
+    <button class="link" onclick="irParaEsqueci()">Esqueci minha senha</button>
+  </div>
+
+  <!-- TELA 2: Esqueci a senha -->
+  <div class="tela" id="telaEsqueci">
+    <div class="card">
+      <h2>Recuperar senha</h2>
+      <p>Informe seu e-mail para receber um código de verificação.</p>
+    </div>
+
+    <div class="field">
+      <label>E-mail</label>
+      <div class="input-wrapper">
+        <input id="emailRec" type="email" autocomplete="off" placeholder="seu@email.com">
+      </div>
+    </div>
+
+    <div class="aviso-spam" id="avisoSpam">
+      <span class="asterisco">*</span> Não recebeu? Verifique a caixa de <b>SPAM</b> ou <b>Lixo Eletrônico</b>.
+    </div>
+
+    <button class="btn" style="margin-top:14px" onclick="enviarCodigo()">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><polyline points="22 6 12 13 2 6"/></svg>
+      Enviar código
+    </button>
+
+    <button class="link" onclick="mostrarTela('telaForm')">Voltar</button>
+  </div>
+
+  <!-- TELA 3: Código -->
+  <div class="tela" id="telaCodigo">
+    <div class="card">
+      <h2>Digite o código</h2>
+      <p>Enviamos um código de 6 dígitos para <b id="emailMascarado">seu e-mail</b>. Ele expira em 5 minutos.</p>
+    </div>
+
+    <div class="code-inputs" id="codeInputs">
+      <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+      <input type="text" inputmode="numeric" maxlength="1">
+    </div>
+
+    <div class="status-codigo" id="statusCodigo"></div>
+
+    <button class="btn" id="btnVerificar" onclick="verificarCodigo()">Verificar</button>
+
+    <button class="link" id="btnReenviar" onclick="reenviarCodigo()">Reenviar código</button>
+    <button class="link" onclick="mostrarTela('telaEsqueci')">Voltar</button>
+  </div>
+
+  <!-- TELA 4: Nova senha (pós-código) -->
+  <div class="tela" id="telaNovaSenha">
+    <div class="card">
+      <h2>Nova senha</h2>
+      <p>Defina uma nova senha de 6 dígitos para os saques.</p>
+    </div>
+
+    <div class="field">
+      <label>Nova senha</label>
+      <div class="input-wrapper">
+        <input id="senhaN1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••">
+        <button type="button" class="olho" onclick="toggleSenha('senhaN1', this)"></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Confirmar nova senha</label>
+      <div class="input-wrapper">
+        <input id="senhaN2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••">
+        <button type="button" class="olho" onclick="toggleSenha('senhaN2', this)"></button>
+      </div>
+    </div>
+
+    <button class="btn" onclick="salvarNovaSenha()">Salvar nova senha</button>
+  </div>
+
+  <!-- TELA 5: Sucesso -->
+  <div class="tela" id="telaSucesso">
+    <div class="card sucesso">
+      <div class="circulo"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2>Senha cadastrada!</h2>
+      <p id="msgSucesso">Sua senha de saque foi salva com sucesso.</p>
+    </div>
+    <button class="btn secundario" onclick="fecharMiniApp()">Fechar</button>
+  </div>
+
+</div>
+
+<!-- Modal de Termos -->
+<div class="modal-tela" id="modalTermos">
+  <h2>📜 Termos de Uso — Senha de Saque</h2>
+  <p>1. A senha de saque é pessoal e intransferível.</p>
+  <p>2. Você é o único responsável por manter sua senha em sigilo.</p>
+  <p>3. Não compartilhe sua senha com ninguém, nem com o suporte.</p>
+  <p>4. Em caso de esquecimento, utilize o fluxo de recuperação por e-mail.</p>
+  <p>5. Saques são processados conforme o saldo disponível e o mínimo exigido.</p>
+  <p>6. Ao cadastrar, você concorda com todas as regras do programa de afiliados.</p>
+  <button class="btn" style="margin-top:16px" onclick="fecharTermos()">Entendi</button>
+</div>
+
+<script>
+const TG = window.Telegram?.WebApp;
+if (TG) { TG.ready(); TG.expand(); }
+
+/* ====== TEMA ====== */
+function aplicarTema(t){
+  document.documentElement.setAttribute('data-tema', t);
+  localStorage.setItem('tema_preferido', t);
+  const i = document.getElementById('iconTema');
+  i.innerHTML = t === 'escuro'
+    ? '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
+    : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+}
+function alternarTema(){
+  const atual = document.documentElement.getAttribute('data-tema');
+  aplicarTema(atual === 'escuro' ? 'claro' : 'escuro');
+}
+aplicarTema(localStorage.getItem('tema_preferido') || 'claro');
+
+/* ====== OLHINHO ====== */
+function toggleSenha(id, btn){
+  const inp = document.getElementById(id);
+  const revelar = inp.type === 'password';
+  inp.type = revelar ? 'text' : 'password';
+  btn.classList.toggle('ativo', revelar);
+  btn.innerHTML = revelar
+    ? '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>'
+    : '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  btn.setAttribute('aria-label', revelar ? 'Ocultar senha' : 'Mostrar senha');
+}
+
+/* ====== NAVEGAÇÃO ENTRE TELAS ====== */
+function mostrarTela(id){
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ====== TERMOS ====== */
+function abrirTermos(e){ e.preventDefault(); document.getElementById('modalTermos').classList.add('active'); }
+function fecharTermos(){ document.getElementById('modalTermos').classList.remove('active'); }
+
+/* ====== MÁSCARA DE INPUT (só dígitos) ====== */
+['senha1','senha2','senhaN1','senhaN2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => { el.value = el.value.replace(/\D/g,'').slice(0,6); });
+});
+
+/* ====== SALVAR SENHA ====== */
+function salvarSenha(){
+  const s1 = document.getElementById('senha1').value;
+  const s2 = document.getElementById('senha2').value;
+  const aceite = document.getElementById('aceiteTermos').checked;
+
+  if (!aceite){
+    document.getElementById('termosBox').classList.add('shake-txt');
+    setTimeout(()=>document.getElementById('termosBox').classList.remove('shake-txt'),400);
+    vibrar();
+    return;
+  }
+  if (s1.length !== 6 || s1 !== s2){
+    vibrar();
+    document.getElementById('senha1').parentElement.classList.add('shake');
+    document.getElementById('senha2').parentElement.classList.add('shake');
+    setTimeout(()=>{
+      document.getElementById('senha1').parentElement.classList.remove('shake');
+      document.getElementById('senha2').parentElement.classList.remove('shake');
+    },400);
+    return;
+  }
+
+  // Salva local (para fluxo de recuperação) e envia pro bot
+  localStorage.setItem('senha_saque_afiliado', s1);
+  enviarParaBot({ tipo:'senha_saque', senha:s1 });
+
+  document.getElementById('msgSucesso').textContent = 'Sua senha de saque foi salva com sucesso.';
+  mostrarTela('telaSucesso');
+  vibrar();
+}
+
+/* ====== ESQUECI A SENHA ====== */
+function irParaEsqueci(){
+  const salvo = localStorage.getItem('email_recuperacao_afiliado');
+  if (salvo) document.getElementById('emailRec').value = salvo;
+  mostrarTela('telaEsqueci');
+}
+
+let codigoAtual = null;
+let codigoExpira = 0;
+let reenvioTimer = null;
+
+function mascararEmail(email){
+  const [user, domain] = email.split('@');
+  if (!user || !domain) return email;
+  return user.slice(0,3) + '*'.repeat(Math.max(3, user.length-3)) + '@' + domain;
+}
+
+function enviarCodigo(){
+  const email = document.getElementById('emailRec').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
+    vibrar();
+    document.getElementById('emailRec').parentElement.classList.add('shake');
+    setTimeout(()=>document.getElementById('emailRec').parentElement.classList.remove('shake'),400);
+    return;
+  }
+
+  localStorage.setItem('email_recuperacao_afiliado', email);
+  document.getElementById('emailMascarado').textContent = mascararEmail(email);
+
+  // 📌 Backend: enviar código real por e-mail. Aqui, geramos local.
+  codigoAtual = String(Math.floor(100000 + Math.random()*900000));
+  codigoExpira = Date.now() + 5*60*1000;
+  console.log('[DEV] Código gerado:', codigoAtual);
+
+  // Avisa o bot que o usuário pediu código (backend enviará e-mail real)
+  enviarParaBot({ tipo:'codigo_recuperacao', email:email });
+
+  document.getElementById('avisoSpam').classList.add('ativo');
+  limparInputsCodigo();
+  mostrarTela('telaCodigo');
+  iniciarReenvio();
+  vibrar();
+}
+
+const inputsCod = document.querySelectorAll('#codeInputs input');
+inputsCod.forEach((inp, i) => {
+  inp.addEventListener('input', () => {
+    inp.value = inp.value.replace(/\D/g,'').slice(0,1);
+    if (inp.value && i < inputsCod.length - 1) inputsCod[i+1].focus();
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !inp.value && i > 0) inputsCod[i-1].focus();
+  });
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+    txt.split('').forEach((c,j) => { if (inputsCod[j]) inputsCod[j].value = c; });
+    inputsCod[Math.min(txt.length, 5)].focus();
+  });
+});
+
+function limparInputsCodigo(){
+  inputsCod.forEach(i => { i.value=''; i.classList.remove('sucesso'); });
+  inputsCod[0].focus();
+  document.getElementById('statusCodigo').textContent = '';
+}
+
+let verificando = false;
+function verificarCodigo(){
+  if (verificando) return;
+  const digitado = Array.from(inputsCod).map(i => i.value).join('');
+
+  if (digitado.length !== 6){
+    mostrarStatus('Digite os 6 dígitos.', true);
+    vibrar();
+    return;
+  }
+  if (Date.now() > codigoExpira){
+    mostrarStatus('Código expirado. Reenvie.', true);
+    vibrar();
+    return;
+  }
+  if (digitado !== codigoAtual){
+    mostrarStatus('Código incorreto.', true);
+    document.getElementById('codeInputs').classList.add('shake');
+    setTimeout(()=>document.getElementById('codeInputs').classList.remove('shake'),400);
+    vibrar();
+    return;
+  }
+
+  verificando = true;
+  inputsCod.forEach(i => i.classList.add('sucesso'));
+  mostrarStatus('Código correto!');
+  vibrar();
+  setTimeout(() => { verificando = false; mostrarTela('telaNovaSenha'); }, 700);
+}
+
+function mostrarStatus(txt, erro){
+  const el = document.getElementById('statusCodigo');
+  el.textContent = txt;
+  el.classList.toggle('err', !!erro);
+}
+
+function iniciarReenvio(){
+  const btn = document.getElementById('btnReenviar');
+  let seg = 60;
+  btn.disabled = true;
+  btn.textContent = `Reenviar em ${seg}s`;
+  clearInterval(reenvioTimer);
+  reenvioTimer = setInterval(() => {
+    seg--;
+    if (seg <= 0){
+      clearInterval(reenvioTimer);
+      btn.disabled = false;
+      btn.textContent = 'Reenviar código';
+    } else {
+      btn.textContent = `Reenviar em ${seg}s`;
+    }
+  }, 1000);
+}
+
+function reenviarCodigo(){
+  codigoAtual = String(Math.floor(100000 + Math.random()*900000));
+  codigoExpira = Date.now() + 5*60*1000;
+  console.log('[DEV] Novo código:', codigoAtual);
+  enviarParaBot({ tipo:'codigo_recuperacao', email:document.getElementById('emailRec').value.trim() });
+  limparInputsCodigo();
+  iniciarReenvio();
+  vibrar();
+}
+
+/* ====== SALVAR NOVA SENHA ====== */
+function salvarNovaSenha(){
+  const s1 = document.getElementById('senhaN1').value;
+  const s2 = document.getElementById('senhaN2').value;
+  if (s1.length !== 6 || s1 !== s2){
+    vibrar();
+    document.getElementById('senhaN1').parentElement.classList.add('shake');
+    document.getElementById('senhaN2').parentElement.classList.add('shake');
+    setTimeout(()=>{
+      document.getElementById('senhaN1').parentElement.classList.remove('shake');
+      document.getElementById('senhaN2').parentElement.classList.remove('shake');
+    },400);
+    return;
+  }
+  localStorage.setItem('senha_saque_afiliado', s1);
+  enviarParaBot({ tipo:'senha_saque', senha:s1 });
+  document.getElementById('msgSucesso').textContent = 'Sua nova senha de saque foi salva.';
+  mostrarTela('telaSucesso');
+  vibrar();
+}
+
+/* ====== VIBRAÇÃO ====== */
+function vibrar(){
+  try { navigator.vibrate?.([80,50,120]); } catch(_) {}
+}
+
+/* ====== INTEGRAÇÃO COM O BOT ====== */
+function enviarParaBot(payload){
+  try {
+    if (TG && TG.sendData) {
+      TG.sendData(JSON.stringify(payload));
+    }
+  } catch(e){ console.warn('Falha ao enviar dados ao bot:', e); }
+}
+
+function fecharMiniApp(){
+  if (TG && TG.close) TG.close();
+}
+</script>
+</body>
+</html>
