@@ -1,2 +1,3 @@
 aiogram==3.13.1
 fpdf2==2.7.9
+aiohttp==3.10.5
